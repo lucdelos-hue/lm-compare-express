@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>LM Compare Express</title>
+    
+    <!-- Meta tags pour le mode Web App (PWA) -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="LM Compare">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="theme-color" content="#009245">
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Bibliothèques Externes -->
+    <script src="https://unpkg.com/html5-qrcode"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+    
+    <style>
+        :root {
+            --lm-green: #009245;
+            --lm-gray: #F4F4F4;
+        }
+        body {
+            background-color: var(--lm-gray);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            overscroll-behavior-y: contain; /* Empêche le pull-to-refresh sur mobile */
+        }
+        .bg-lm-green { background-color: var(--lm-green); }
+        .text-lm-green { color: var(--lm-green); }
+        .border-lm-green { border-color: var(--lm-green); }
+        
+        #reader {
+            width: 100% !important;
+            border: none !important;
+        }
+        #reader__dashboard_section_csr button {
+            background-color: var(--lm-green) !important;
+            color: white !important;
+            padding: 10px 20px !important;
+            border-radius: 8px !important;
+            text-transform: uppercase !important;
+            font-weight: bold !important;
+            font-size: 14px !important;
+        }
+    </style>
+</head>
+<body class="pb-10">
+
+    <!-- Header -->
+    <header class="bg-white shadow-sm border-b-4 border-lm-green sticky top-0 z-50">
+        <div class="max-w-md mx-auto px-4 py-3 flex justify-between items-center">
+            <div class="flex items-center space-x-2">
+                <div class="w-8 h-8 bg-lm-green flex items-center justify-center rounded">
+                    <span class="text-white font-bold text-xl">L</span>
+                </div>
+                <h1 class="font-bold text-lg tracking-tight">Compare <span class="text-lm-green">Express</span></h1>
+            </div>
+            <button id="btn-settings" class="p-2 text-gray-500 hover:text-lm-green">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                </svg>
+            </button>
+        </div>
+    </header>
+
+    <main class="max-w-md mx-auto p-4 space-y-6">
+        
+        <!-- Import Panel -->
+        <div id="import-panel" class="hidden bg-white p-4 rounded-lg shadow-sm border border-gray-200">
+            <h2 class="font-bold mb-3">Base de données</h2>
+            <div class="space-y-3">
+                <input type="file" id="csv-file" accept=".csv,.json" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-lm-green file:text-white hover:file:opacity-90"/>
+                <p id="db-status" class="text-xs text-gray-500 italic">Données de test actives</p>
+            </div>
+        </div>
+
+        <!-- Scan Slots -->
+        <div class="grid grid-cols-2 gap-4">
+            <div id="slot-a" class="bg-white p-4 rounded-xl shadow-sm border-2 border-transparent transition-all overflow-hidden">
+                <div class="text-xs font-bold text-gray-400 mb-2 uppercase tracking-wider">Produit A</div>
+                <div id="display-a" class="h-32 flex flex-col items-center justify-center text-center space-y-2">
+                    <div class="p-3 bg-gray-100 rounded-full">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                        </svg>
+                    </div>
+                    <button onclick="openScanner('A')" class="text-sm font-semibold text-lm-green">Scanner</button>
+                </div>
+            </div>
+
+            <div id="slot-b" class="bg-white p-4 rounded-xl shadow-sm border-2 border-transparent transition-all overflow-hidden">
+                <div class="text-xs font-bold text-gray-400 mb-2 uppercase tracking-wider">Produit B</div>
+                <div id="display-b" class="h-32 flex flex-col items-center justify-center text-center space-y-2">
+                    <div class="p-3 bg-gray-100 rounded-full">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                        </svg>
+                    </div>
+                    <button onclick="openScanner('B')" class="text-sm font-semibold text-lm-green">Scanner</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Scanner UI -->
+        <div id="scanner-container" class="hidden bg-black rounded-xl overflow-hidden relative min-h-[300px]">
+            <div id="reader"></div>
+            <div class="absolute bottom-4 left-0 right-0 flex justify-center space-x-4 px-4 z-10">
+                <button id="btn-manual" class="bg-white text-gray-800 px-4 py-2 rounded-full text-sm font-bold shadow-lg">Saisie manuelle</button>
+                <button onclick="closeScanner()" class="bg-red-500 text-white px-4 py-2 rounded-full text-sm font-bold shadow-lg">Annuler</button>
+            </div>
+        </div>
+
+        <!-- Actions -->
+        <div id="action-bar" class="flex flex-col space-y-3">
+            <button id="btn-compare" disabled class="w-full py-4 rounded-xl bg-gray-300 text-white font-bold text-lg shadow-lg transition-all">
+                Comparer les produits
+            </button>
+            <button id="btn-reset" class="text-center text-sm text-gray-500 font-medium py-2">Réinitialiser la sélection</button>
+        </div>
+
+        <!-- Comparison Results -->
+        <div id="comparison-results" class="hidden space-y-4">
+            <div class="flex justify-between items-center">
+                <h2 class="font-bold text-lg">Différences</h2>
+                <button id="btn-export-pdf" class="flex items-center space-x-1 text-xs bg-gray-800 text-white px-3 py-1.5 rounded-lg">
+                    <span>Export PDF</span>
+                </button>
+            </div>
+            <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+                <table class="w-full text-sm">
+                    <thead class="bg-gray-50 text-gray-500 text-xs uppercase">
+                        <tr>
+                            <th class="px-4 py-3 text-left">Critère</th>
+                            <th class="px-4 py-3 text-center">A</th>
+                            <th class="px-4 py-3 text-center">B</th>
+                        </tr>
+                    </thead>
+                    <tbody id="comparison-table-body" class="divide-y divide-gray-100"></tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <!-- Modal Manuel -->
+    <div id="modal-manual" class="fixed inset-0 bg-black bg-opacity-50 z-[100] hidden items-center justify-center p-4">
+        <div class="bg-white rounded-2xl w-full max-w-xs p-6 shadow-2xl">
+            <h3 class="font-bold text-lg mb-4">Saisie EAN</h3>
+            <input type="number" id="manual-ean-input" class="w-full p-3 border rounded-lg mb-4 outline-none focus:ring-2 focus:ring-lm-green">
+            <div class="flex space-x-3">
+                <button onclick="document.getElementById('modal-manual').classList.add('hidden')" class="flex-1 py-2 text-gray-500 font-bold">Annuler</button>
+                <button id="btn-submit-manual" class="flex-1 py-2 bg-lm-green text-white rounded-lg font-bold">Valider</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let productDatabase = [
+            { ean: "3276007134015", nom: "Perceuse DEXTER 20V", prix: "59.90 €", puissance: "20V", couple: "45 Nm", garantie: "3 ans" },
+            { ean: "3276007134022", nom: "Perceuse DEXTER Percussion", prix: "74.90 €", puissance: "20V", couple: "60 Nm", garantie: "3 ans" },
+            { ean: "3663602423249", nom: "RYOBI 18V 33cm", prix: "199.00 €", puissance: "18V", largeur: "33 cm", garantie: "2 ans" },
+            { ean: "4892210160218", nom: "RYOBI 36V 40cm", prix: "349.00 €", puissance: "36V", largeur: "40 cm", garantie: "3 ans" }
+        ];
+
+        let productA = null, productB = null, currentScanTarget = null, html5QrCode = null;
+
+        const ui = {
+            settings: document.getElementById('btn-settings'),
+            panel: document.getElementById('import-panel'),
+            btnCompare: document.getElementById('btn-compare'),
+            btnReset: document.getElementById('btn-reset'),
+            results: document.getElementById('comparison-results'),
+            table: document.getElementById('comparison-table-body'),
+            scanner: document.getElementById('scanner-container'),
+            manualBtn: document.getElementById('btn-manual'),
+            manualModal: document.getElementById('modal-manual'),
+            manualInput: document.getElementById('manual-ean-input'),
+            manualSubmit: document.getElementById('btn-submit-manual'),
+            exportBtn: document.getElementById('btn-export-pdf')
+        };
+
+        ui.settings.onclick = () => ui.panel.classList.toggle('hidden');
+        ui.resetBtn = ui.btnReset.onclick = () => { productA = productB = null; ui.results.classList.add('hidden'); updateUI(); };
+
+        function openScanner(target) {
+            currentScanTarget = target;
+            ui.scanner.classList.remove('hidden');
+            html5QrCode = new Html5Qrcode("reader");
+            html5QrCode.start({ facingMode: "environment" }, { fps: 10, qrbox: 250 }, (text) => { findProduct(text); closeScanner(); });
+        }
+
+        function closeScanner() {
+            if (html5QrCode) html5QrCode.stop().then(() => { html5QrCode.clear(); ui.scanner.classList.add('hidden'); });
+            else ui.scanner.classList.add('hidden');
+        }
+
+        ui.manualBtn.onclick = () => ui.manualModal.classList.remove('hidden');
+        ui.manualSubmit.onclick = () => { findProduct(ui.manualInput.value); ui.manualModal.classList.add('hidden'); closeScanner(); };
+
+        function findProduct(ean) {
+            const p = productDatabase.find(x => x.ean === ean);
+            if (p) { if (currentScanTarget === 'A') productA = p; else productB = p; updateUI(); }
+            else alert("Produit inconnu");
+        }
+
+        function updateUI() {
+            renderSlot('a', productA);
+            renderSlot('b', productB);
+            ui.btnCompare.disabled = !(productA && productB);
+            ui.btnCompare.className = ui.btnCompare.disabled ? "w-full py-4 rounded-xl bg-gray-300 text-white font-bold text-lg" : "w-full py-4 rounded-xl bg-lm-green text-white font-bold text-lg shadow-lg";
+        }
+
+        function renderSlot(id, p) {
+            const disp = document.getElementById(`display-${id}`);
+            const slot = document.getElementById(`slot-${id}`);
+            if (p) {
+                slot.classList.add('border-lm-green');
+                disp.innerHTML = `<div class="text-xs font-bold text-lm-green">${p.nom}</div><div class="text-lg font-black">${p.prix}</div><button onclick="openScanner('${id.toUpperCase()}')" class="text-[10px] underline text-gray-400">Changer</button>`;
+            } else {
+                slot.classList.remove('border-lm-green');
+                disp.innerHTML = `<div class="p-3 bg-gray-100 rounded-full"><svg class="h-6 w-6 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" /></svg></div><button onclick="openScanner('${id.toUpperCase()}')" class="text-sm font-semibold text-lm-green">Scanner</button>`;
+            }
+        }
+
+        ui.btnCompare.onclick = () => {
+            ui.table.innerHTML = "";
+            const keys = Array.from(new Set([...Object.keys(productA), ...Object.keys(productB)])).filter(k => !['ean', 'nom'].includes(k));
+            keys.forEach(k => {
+                if (productA[k] !== productB[k]) {
+                    const row = ui.table.insertRow();
+                    row.className = "hover:bg-green-50";
+                    row.innerHTML = `<td class="px-4 py-3 font-semibold text-gray-600">${k}</td><td class="px-4 py-3 text-center">${productA[k] || '-'}</td><td class="px-4 py-3 text-center">${productB[k] || '-'}</td>`;
+                }
+            });
+            ui.results.classList.remove('hidden');
+            ui.results.scrollIntoView({ behavior: 'smooth' });
+        };
+
+        ui.exportBtn.onclick = () => {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            doc.text("Comparatif Leroy Merlin", 10, 10);
+            doc.autoTable({ head: [['Critère', 'A', 'B']], body: Array.from(ui.table.rows).map(r => Array.from(r.cells).map(c => c.innerText)) });
+            doc.save("comparatif.pdf");
+        };
+    </script>
+</body>
+</html>
